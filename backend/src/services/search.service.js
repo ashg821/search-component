@@ -21,7 +21,6 @@ const searchAds = async (string) => {
             }
 
         ]);
-        return filteredAds;
     }
     //if the search string is not present
     else {
@@ -35,7 +34,7 @@ const searchAds = async (string) => {
                     foreignField: "_id",
                     as: "companyDetails"
                 }
-    
+
             },
             {
                 $match: {
@@ -44,21 +43,18 @@ const searchAds = async (string) => {
                         { headline: { $regex: string, $options: 'ig' } },
                         { description: { $regex: string, $options: 'ig' } },
                         {
-                            companyDetails: {$elemMatch: {name: {$regex: string, $options: 'ig'}}}
+                            companyDetails: { $elemMatch: { name: { $regex: string, $options: 'ig' } } }
                         }
                     ]
                 }
             }
-    
+
         ]);
-        return filteredAds;
     }
+    return filteredAds;
 
 }
 
-const getCompanyById = async (id) => {
-    const company = await Company.findById(id);
-    return company;
-}
 
-module.exports = { searchAds, getCompanyById }
+
+module.exports = { searchAds }
