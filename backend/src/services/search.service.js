@@ -1,27 +1,64 @@
-const apiError = require('../utils/ApiError');
 const Ad = require('../models/ads.model');
 const Company = require('../models/company.model');
 
 
+
+
 const searchAds = async (string) => {
-    let filteredAds = [];
+    let filteredAds = []
+    //if the search string is empty
     if (!string) {
-        filteredAds = await Ad.find({});
+        filteredAds = await Ad.aggregate([
+            {
+                $lookup:
+                {
+                    from: "companies",
+                    localField: "companyId",
+                    foreignField: "_id",
+                    as: "companyDetails"
+                }
+
+            }
+
+        ]);
+        return filteredAds;
     }
+    //if the search string is not present
     else {
         string = string.trim();
-        const stringRegex = new RegExp(string, 'gi');
-        const companyArray = await Company.find({ name: { $regex: stringRegex } });
-        const companyIdArray = companyArray.map(ele => ele._id);
-        filteredAds = await Ad.find({ $or: [{ primaryText: { $regex: stringRegex } }, { headline: { $regex: stringRegex } }, { description: { $regex: stringRegex } }, { companyId: { $in: companyIdArray } }] });
-
+        filteredAds = await Ad.aggregate([
+            {
+                $lookup:
+                {
+                    from: "companies",
+                    localField: "companyId",
+                    foreignField: "_id",
+                    as: "companyDetails"
+                }
+    
+            },
+            {
+                $match: {
+                    $or: [
+                        { primaryText: { $regex: string, $options: 'ig' } },
+                        { headline: { $regex: string, $options: 'ig' } },
+                        { description: { $regex: string, $options: 'ig' } },
+                        {
+                            companyDetails: {$elemMatch: {name: {$regex: string, $options: 'ig'}}}
+                        }
+                    ]
+                }
+            }
+    
+        ]);
+        return filteredAds;
     }
-    return filteredAds;
+
 }
 
-const getUrlById = async (id) => {
-    const {url} = await Company.findById(id);
-    return url;
+const getCompanyById = async (id) => {
+    const company = await Company.findById(id);
+    return company;
 }
 
-module.exports = { searchAds, getUrlById }
+module.exports = { searchAds, getCompanyById }
